@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Slot Machine Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    #slotMachine {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .slot {
+      width: 100px;
+      height: 100px;
+      border: 2px solid #333;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      margin: 0 10px;
+      transition: all 0.3s ease;
+    }
+
+    #balance, #loan {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    .win {
+      background-color: lightgreen;
+    }
+
+    .lose {
+      background-color: lightcoral;
+    }
+
+    .jackpot {
+      background-color: gold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎰 Your next spin can win the 🦖 JACKPOT and get $200!</h2>
+
+  <div id="balance">Balance: $100</div>
+  <div id="loan">Loan: $0</div>
+
+  <div id="slotMachine">
+    <div class="slot" id="slot1">🍒</div>
+    <div class="slot" id="slot2">🍒</div>
+    <div class="slot" id="slot3">🍒</div>
+  </div>
+
+  <button id="spinButton">Spin</button>
+  <button id="loanButton">Take $100 Loan</button>
+  <button id="repayButton">Repay $10 Loan</button>
+
+  <script>
+    const symbols = ['🍒', '🍋', '🍊', '🍉', '⭐', '🍀'];
+    const jackpotSymbol = '🦖';
+    let balance = 100;
+    let loan = 0;
+    let spinCounter = 0;
+    const winChance = 0.30;
+    const jackpotChance = 1 / 1000;
+
+    const balanceDisplay = document.getElementById('balance');
+    const loanDisplay = document.getElementById('loan');
+    const slot1 = document.getElementById('slot1');
+    const slot2 = document.getElementById('slot2');
+    const slot3 = document.getElementById('slot3');
+
+    function updateDisplay() {
+      balanceDisplay.innerText = `Balance: $${balance}`;
+      loanDisplay.innerText = `Loan: $${loan}`;
+    }
+
+    document.getElementById('spinButton').addEventListener('click', function () {
+      if (balance < 10) return;
+
+      [slot1, slot2, slot3].forEach(slot => slot.classList.remove('win', 'lose', 'jackpot'));
+
+      balance -= 10;
+      spinCounter++;
+
+      if (spinCounter % 5 === 0 && loan > 0) {
+        const interest = Math.ceil(loan * 0.03);
+        loan += interest;
+      }
+
+      updateDisplay();
+
+      const isJackpot = Math.random() < jackpotChance;
+      let result1, result2, result3;
+
+      if (isJackpot) {
+        result1 = result2 = result3 = jackpotSymbol;
+      } else {
+        const shouldWin = Math.random() < winChance;
+
+        if (shouldWin) {
+          const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+          result1 = result2 = result3 = winningSymbol;
+        } else {
+          result1 = symbols[Math.floor(Math.random() * symbols.length)];
+          do {
+            result2 = symbols[Math.floor(Math.random() * symbols.length)];
+          } while (result2 === result1);
+          do {
+            result3 = symbols[Math.floor(Math.random() * symbols.length)];
+          } while (result3 === result1 || result3 === result2);
+        }
+      }
+
+      randomizeSlots(slot1, slot2, slot3, result1, result2, result3, isJackpot);
+    });
+
+    document.getElementById('loanButton').addEventListener('click', function () {
+      balance += 100;
+      loan += 100;
+      updateDisplay();
+    });
+
+    document.getElementById('repayButton').addEventListener('click', function () {
+      if (balance >= 10 && loan >= 10) {
+        balance -= 10;
+        loan -= 10;
+        updateDisplay();
+      }
+    });
+
+    function randomizeSlots(slot1, slot2, slot3, result1, result2, result3, isJackpot) {
+      let spins = 15;
+      let spinCount = 0;
+      const intervalId = setInterval(() => {
+        slot1.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+        slot2.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+        slot3.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+        spinCount++;
+
+        if (spinCount >= spins) {
+          clearInterval(intervalId);
+          slot1.innerText = result1;
+          slot2.innerText = result2;
+          slot3.innerText = result3;
+
+          if (isJackpot) {
+            balance += 200;
+            [slot1, slot2, slot3].forEach(slot => slot.classList.add('jackpot'));
+          } else {
+            const win = checkWin(result1, result2, result3);
+            const outcomeClass = win ? 'win' : 'lose';
+            [slot1, slot2, slot3].forEach(slot => slot.classList.add(outcomeClass));
+          }
+
+          updateDisplay();
+        }
+      }, 75);
+    }
+
+    function checkWin(symbol1, symbol2, symbol3) {
+      if (symbol1 === symbol2 && symbol2 === symbol3 && symbol1 !== '🦖') {
+        balance += 30;
+        return true;
+      }
+      return false;
+    }
+  </script>
+
+</body>
+</html>
